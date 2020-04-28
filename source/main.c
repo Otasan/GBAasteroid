@@ -27,6 +27,8 @@ typedef volatile int32_t	vs32;
 #define SCREEN_W  240
 #define SCREEN_H 160
 
+#define INPUT *((vu16*)(0x04000130))
+
 u16 setColor( u8 a_red, u8 a_green, u8 a_blue){
 	return (a_red & 0x1F) | (a_green & 0x1F) << 5 | (a_blue & 0x1F) << 10;
 }
@@ -76,13 +78,39 @@ void plotTri(s32 xa, s32 ya, s32 xb, s32 yb, s32 xc, s32 yc, s16 color){
 	plotLine(xc, yc, xa, ya, color);
 }
 
+#define REG_VCOUNT (*(vu16*)(0x04000006))
+void vsync()
+{
+	while (REG_VCOUNT >= SCREEN_H);
+	while (REG_VCOUNT < SCREEN_H);
+}
+
 int main()
 {
 	//set GBA rendering context to MODE 3 Bitmap Rendering
 	REG_DISPCTR = VIDEOMODE_3 | BG_ENABLE2;
-
-	plotTri(10, 20, 120, 80, 50, 50, setColor(25, 12, 12));
+	u32 x = SCREEN_W>>1;
+	u32 y = SCREEN_H>>1;
+	u16 color = setColor(16, 0, 0);
+	u8 r = 16, g = 0, b = 0;
 	while(1){
+		vsync();
+		plotPixel(x,y,color);
+		if( INPUT % 2 == 0 ){
+			
+		}
+		if( (INPUT >> 4) % 2 == 0 && x<SCREEN_W){
+			x++;
+		}
+		if( (INPUT >> 5) % 2 == 0 && x>0){
+			x--;
+		}
+		if( (INPUT >> 6) % 2 == 0 && y>0){
+			y--;
+		}
+		if( (INPUT >> 7) % 2 == 0 && y<SCREEN_H){
+			y++;
+		}
 	}
 
 	return 0;
